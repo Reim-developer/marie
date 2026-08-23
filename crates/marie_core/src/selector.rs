@@ -1,3 +1,4 @@
+use anyhow::anyhow;
 use scraper::{ElementRef, Html, Selector, element_ref::Text};
 
 pub struct HtmlSelector<'a> {
@@ -5,6 +6,7 @@ pub struct HtmlSelector<'a> {
     pub document: &'a Html,
 }
 
+type HrefsResult<'a> = Result<Vec<&'a str>, anyhow::Error>;
 impl<'a> HtmlSelector<'a> {
     #[must_use]
     pub const fn new(selector: Selector, document: &'a Html) -> Self {
@@ -19,6 +21,21 @@ impl<'a> HtmlSelector<'a> {
     #[must_use]
     pub fn find(&self) -> Option<ElementRef<'a>> {
         self.document.select(&self.selector).next()
+    }
+
+    /// # Errors
+    /// Parse failed.
+    pub fn hrefs(&self) -> HrefsResult<'a> {
+        type S = Selector;
+
+        let selector = S::parse("[href]").map_err(|e| anyhow!("{e}"))?;
+        let hrefs = self
+            .document
+            .select(&selector)
+            .filter_map(|element| element.value().attr("href"))
+            .collect();
+
+        Ok(hrefs)
     }
 
     #[must_use]
@@ -71,4 +88,24 @@ fn test_text_element() {
     let element = selector.find().unwrap();
 
     assert_eq!(HtmlSelector::text_element(element.text()), "Hello Earth !");
+}
+
+#[test]
+fn test_href_element() {
+    use crate::scraper::Scraper;
+
+    const HTML: &str = "
+        <div> 
+            <a href='https://google.com'> </a>
+            <a href='https://youtube.com'> </a>
+        <div>
+    ";
+
+    let html = Scraper::new(HTML.to_string()).parse_html();
+    let selector = Scraper::selector("[href]", &html).unwrap();
+    let hrefs = selector.hrefs().unwrap();
+
+    for href in hrefs {
+        assert!(!href.is_empty());
+    }
 }
