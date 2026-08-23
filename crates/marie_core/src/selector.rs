@@ -6,7 +6,7 @@ pub struct HtmlSelector<'a> {
     pub document: &'a Html,
 }
 
-type HrefsResult<'a> = Result<Vec<&'a str>, anyhow::Error>;
+type SourcesOrHref<'a> = Result<Vec<&'a str>, anyhow::Error>;
 impl<'a> HtmlSelector<'a> {
     #[must_use]
     pub const fn new(selector: Selector, document: &'a Html) -> Self {
@@ -25,7 +25,7 @@ impl<'a> HtmlSelector<'a> {
 
     /// # Errors
     /// Parse failed.
-    pub fn hrefs(&self) -> HrefsResult<'a> {
+    pub fn hrefs(&self) -> SourcesOrHref<'a> {
         type S = Selector;
 
         let selector = S::parse("[href]").map_err(|e| anyhow!("{e}"))?;
@@ -36,6 +36,21 @@ impl<'a> HtmlSelector<'a> {
             .collect();
 
         Ok(hrefs)
+    }
+
+    /// # Errors
+    /// Parse selector failed.
+    pub fn srcs(&self) -> SourcesOrHref<'a> {
+        type S = Selector;
+
+        let selector = S::parse("[src]").map_err(|e| anyhow!("{e}"))?;
+        let srcs = self
+            .document
+            .select(&selector)
+            .filter_map(|element| element.value().attr("src"))
+            .collect();
+
+        Ok(srcs)
     }
 
     #[must_use]
@@ -107,5 +122,26 @@ fn test_href_element() {
 
     for href in hrefs {
         assert!(!href.is_empty());
+    }
+}
+
+#[test]
+fn test_src_element() {
+    use crate::scraper::Scraper;
+
+    const HTML: &str = "
+        <div> 
+           <img src='https://something/image.png'>
+           <img src='https://something/image_2.png'>
+        <div>
+    ";
+
+    let html = Scraper::new(HTML.to_string()).parse_html();
+    let selector = Scraper::selector("[href]", &html).unwrap();
+    let srcs = selector.srcs().unwrap();
+
+    for src in srcs {
+        assert!(!src.is_empty());
+        println!("{src}");
     }
 }
