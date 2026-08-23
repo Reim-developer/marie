@@ -1,0 +1,10 @@
+[package]
+name = "marie_tui"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+anyhow = "1.0.104"
+crossterm = "0.29.0"
+marie_core = { path = "../marie_core" }
+ratatui = "0.30.2"
