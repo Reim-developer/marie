@@ -46,7 +46,7 @@ impl Boostrap {
 
         if let E::Key(key) = read()?
             && key.kind == K::Press
-            && self.app.url_input.input_handle(key.code)
+            && self.app.keyboard_handle(key.code)
         {
             return Ok(true);
         }
