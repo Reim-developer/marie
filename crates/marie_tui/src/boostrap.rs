@@ -31,9 +31,9 @@ impl Boostrap {
         })
     }
 
-    fn leave(&mut self) -> Result<(), anyhow::Error> {
+    fn leave(mut self) -> Result<(), anyhow::Error> {
         disable_raw_mode()?;
-        execute!(*self.terminal.backend_mut(), LeaveAlternateScreen)?;
+        execute!(self.terminal.backend_mut(), LeaveAlternateScreen)?;
 
         Ok(())
     }
