@@ -32,7 +32,7 @@ impl UrlInput {
         false
     }
 
-    fn render_pointer(&self, area: Rect, frame: &mut Frame) {
+    fn render_cursor(&self, area: Rect, frame: &mut Frame) {
         let chars_count = self.url.chars().count();
         let text_length = u16::try_from(chars_count + 4).unwrap_or(u16::MAX);
         let cursor_x = area.x + text_length;
@@ -49,13 +49,15 @@ impl UrlInput {
         }
     }
 
-    /// # Errors
-    /// Handle event or rendering TUI component failed.
-    pub fn render(
-        &self,
-        frame: &mut Frame,
-        area: &Rect,
-    ) -> Result<(), anyhow::Error> {
+    fn style(focused: bool) -> Style {
+        if focused {
+            Style::default()
+        } else {
+            Style::default().fg(Color::DarkGray)
+        }
+    }
+
+    fn render_input(&self, frame: &mut Frame, area: Rect, focused: bool) {
         type P<'a> = Paragraph<'a>;
         type S<'a> = Span<'a>;
         type L<'a> = Line<'a>;
@@ -64,11 +66,27 @@ impl UrlInput {
         let raw_span: &SpanV = &[S::raw(MARKER), S::raw(self.url.as_str())];
         let input_border = B::bordered().title("URL");
         let input_line = L::from(raw_span);
-        let input = P::new(input_line)
-            .block(input_border.border_style(self.block_style()));
+        let input = P::new(input_line).block(
+            input_border
+                .border_style(self.block_style())
+                .style(Self::style(focused)),
+        );
 
-        frame.render_widget(input, *area);
-        self.render_pointer(*area, frame);
+        frame.render_widget(input, area);
+    }
+
+    /// # Errors
+    /// Handle event or rendering TUI component failed.
+    pub fn render(
+        &self,
+        frame: &mut Frame,
+        area: &Rect,
+        focused: bool,
+    ) -> Result<(), anyhow::Error> {
+        self.render_input(frame, *area, focused);
+        if focused {
+            self.render_cursor(*area, frame);
+        }
 
         Ok(())
     }
