@@ -1,8 +1,9 @@
 use std::io::{self, Stdout};
 
 use crate::app::App;
+use crossterm::event::KeyEventKind;
 use crossterm::{
-    event::{self, Event, KeyCode},
+    event::{self, Event},
     execute,
     terminal::{
         EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode,
@@ -38,12 +39,28 @@ impl Boostrap {
         Ok(())
     }
 
+    fn read_key(&mut self) -> io::Result<bool> {
+        type K = KeyEventKind;
+        type E = Event;
+        use event::read;
+
+        if let E::Key(key) = read()?
+            && key.kind == K::Press
+            && self.app.url_input.input_handle(key.code)
+        {
+            return Ok(true);
+        }
+
+        Ok(false)
+    }
+
     fn start_main_loop(&mut self) -> Result<(), anyhow::Error> {
         loop {
-            self.terminal.draw(|frame| self.app.render(frame))?;
-            if let Event::Key(key) = event::read()?
-                && key.code == KeyCode::Char('q')
-            {
+            self.terminal.draw(|frame| {
+                let _ = self.app.render(frame);
+            })?;
+
+            if self.read_key()? {
                 break;
             }
         }
