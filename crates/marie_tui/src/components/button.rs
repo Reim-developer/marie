@@ -1,9 +1,11 @@
 use ratatui::{
     Frame,
     layout::Rect,
-    style::{Color, Style},
+    style::Style,
     widgets::{Block, Paragraph},
 };
+
+use crate::utils::focused_style;
 
 #[derive(Default)]
 pub struct Button;
@@ -22,14 +24,6 @@ impl ButtonProperties {
 
 type BT = ButtonProperties;
 impl Button {
-    fn style(focused: bool) -> Style {
-        if focused {
-            Style::default()
-        } else {
-            Style::default().fg(Color::DarkGray)
-        }
-    }
-
     fn render_button_style(
         frame: &mut Frame,
         area: Rect,
@@ -54,7 +48,7 @@ impl Button {
         focused: bool,
         properties: BT,
     ) -> Result<(), anyhow::Error> {
-        let style = Self::style(focused);
+        let style = focused_style(focused);
         Self::render_button_style(frame, *area, style, properties);
         Ok(())
     }
