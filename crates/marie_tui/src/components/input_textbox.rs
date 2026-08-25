@@ -1,4 +1,3 @@
-use crossterm::event::KeyCode;
 use ratatui::{
     Frame,
     layout::{Position, Rect},
@@ -8,45 +7,21 @@ use ratatui::{
 };
 
 #[derive(Default)]
-pub struct UrlInput {
-    pub url: String,
+pub struct InputTextbox {
+    pub value: String,
 }
 
 type SpanV<'a> = [Span<'a>];
 const MARKER: &str = ">  ";
 
-impl UrlInput {
-    pub fn input_handle(&mut self, key: KeyCode) -> bool {
-        type K = KeyCode;
-
-        match key {
-            K::Enter => self.url.clear(),
-            K::Char(c) => self.url.push(c),
-            K::Backspace => {
-                self.url.pop();
-            }
-            K::Esc => return true,
-            _ => {}
-        }
-
-        false
-    }
-
+impl InputTextbox {
     fn render_cursor(&self, area: Rect, frame: &mut Frame) {
-        let chars_count = self.url.chars().count();
+        let chars_count = self.value.chars().count();
         let text_length = u16::try_from(chars_count + 4).unwrap_or(u16::MAX);
         let cursor_x = area.x + text_length;
         let cursor_y = area.y + 1;
 
         frame.set_cursor_position(Position::new(cursor_x, cursor_y));
-    }
-
-    fn block_style(&self) -> Style {
-        if self.url.is_empty() {
-            Style::default()
-        } else {
-            Style::default().fg(Color::Gray)
-        }
     }
 
     fn style(focused: bool) -> Style {
@@ -63,12 +38,12 @@ impl UrlInput {
         type L<'a> = Line<'a>;
         type B<'a> = Block<'a>;
 
-        let raw_span: &SpanV = &[S::raw(MARKER), S::raw(self.url.as_str())];
+        let raw_span: &SpanV = &[S::raw(MARKER), S::raw(self.value.as_str())];
         let input_border = B::bordered().title("URL");
         let input_line = L::from(raw_span);
         let input = P::new(input_line).block(
             input_border
-                .border_style(self.block_style())
+                .border_style(Self::style(focused))
                 .style(Self::style(focused)),
         );
 
