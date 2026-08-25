@@ -1,10 +1,12 @@
 use ratatui::{
     Frame,
     layout::{Position, Rect},
-    style::{Color, Style},
+    style::Style,
     text::{Line, Span},
     widgets::{Block, Paragraph},
 };
+
+use crate::utils::focused_style;
 
 #[derive(Default)]
 pub struct InputTextbox {
@@ -24,14 +26,6 @@ impl InputTextbox {
         frame.set_cursor_position(Position::new(cursor_x, cursor_y));
     }
 
-    fn style(focused: bool) -> Style {
-        if focused {
-            Style::default()
-        } else {
-            Style::default().fg(Color::DarkGray)
-        }
-    }
-
     fn render_input(&self, frame: &mut Frame, area: Rect, focused: bool) {
         type P<'a> = Paragraph<'a>;
         type S<'a> = Span<'a>;
@@ -43,8 +37,8 @@ impl InputTextbox {
         let input_line = L::from(raw_span);
         let input = P::new(input_line).block(
             input_border
-                .border_style(Self::style(focused))
-                .style(Self::style(focused)),
+                .border_style(focused_style(focused))
+                .style(Style::default()),
         );
 
         frame.render_widget(input, area);
