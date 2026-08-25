@@ -1,18 +1,16 @@
-use std::rc::Rc;
-
-use crossterm::event::KeyCode;
 use ratatui::layout::{Constraint, Direction, Rect};
 use ratatui::{Frame, layout::Layout};
+use std::rc::Rc;
 
-use crate::components::download_button::DownloadButton;
+use crate::components::button::{Button, ButtonProperties};
+use crate::components::input_textbox::InputTextbox;
 use crate::components::simple_help::render_simple_help;
-use crate::components::url_input::UrlInput;
 use crate::focus::Focus;
 
 #[derive(Default)]
 pub struct App {
-    pub url_input: UrlInput,
-    pub download_button: DownloadButton,
+    pub url_input: InputTextbox,
+    pub download_button: Button,
     pub focus: Focus,
 }
 
@@ -20,29 +18,6 @@ type C = Constraint;
 impl App {
     const CONSTRAINTS: [C; 3] = [C::Min(1), C::Length(3), C::Length(1)];
     const INPUT_CONSTRAINTS: [C; 2] = [C::Min(1), C::Length(12)];
-
-    pub fn keyboard_handle(&mut self, key: KeyCode) -> bool {
-        match key {
-            KeyCode::Left | KeyCode::Right => {
-                self.focus.handle(key);
-            }
-
-            KeyCode::Esc => return true,
-            _ => match self.focus {
-                Focus::UrlInput => {
-                    if self.url_input.input_handle(key) {
-                        return true;
-                    }
-                }
-
-                Focus::DownloadButton => {
-                    if key == KeyCode::Enter { /* Implement Soon. */ }
-                }
-            },
-        }
-
-        false
-    }
 
     fn input_layout(layout: &Rc<[Rect]>) -> Rc<[Rect]> {
         Layout::default()
@@ -70,8 +45,13 @@ impl App {
         frame: &mut Frame,
         layout: &Rc<[Rect]>,
     ) -> Result<(), anyhow::Error> {
+        type BP = ButtonProperties;
+        type S = String;
         let focused = matches!(self.focus, Focus::DownloadButton);
-        self.download_button.render(frame, &layout[1], focused)?;
+
+        let properties = BP::new(S::from("Action"), S::from(" Download "));
+        self.download_button
+            .render(frame, &layout[1], focused, properties)?;
 
         Ok(())
     }
