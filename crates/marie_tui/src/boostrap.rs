@@ -1,6 +1,10 @@
 use std::io::{self, Stdout};
 
 use crate::app::App;
+use crate::core::app::AppCore;
+use crate::core::sender::AppSender;
+use crate::core::signal::AppSignal;
+use crate::keyboard::KeyboardAction;
 use crossterm::event::KeyEventKind;
 use crossterm::{
     event::{self, Event},
@@ -11,15 +15,17 @@ use crossterm::{
     },
 };
 use ratatui::{Terminal, backend::CrosstermBackend};
+use tokio::sync::mpsc;
 
 type StdoutTerm = Terminal<CrosstermBackend<Stdout>>;
 pub struct Boostrap {
     terminal: StdoutTerm,
     app: App,
+    app_sender: AppSender,
 }
 
 impl Boostrap {
-    fn enter(app: App) -> Result<Self, anyhow::Error> {
+    fn enter(app: App, app_sender: AppSender) -> Result<Self, anyhow::Error> {
         enable_raw_mode()?;
 
         let stdout = io::stdout();
@@ -29,6 +35,7 @@ impl Boostrap {
         Ok(Self {
             terminal: Terminal::new(backend)?,
             app,
+            app_sender,
         })
     }
 
@@ -39,29 +46,40 @@ impl Boostrap {
         Ok(())
     }
 
-    fn read_key(&mut self) -> io::Result<bool> {
+    fn read_key(&mut self) -> io::Result<KeyboardAction> {
         type K = KeyEventKind;
         type E = Event;
         use event::read;
 
         if let E::Key(key) = read()?
             && key.kind == K::Press
-            && self.app.keyboard_handle(key.code)
         {
-            return Ok(true);
+            return Ok(KeyboardAction::keyboard(key.code, &mut self.app));
         }
 
-        Ok(false)
+        Ok(KeyboardAction::None)
     }
 
-    fn start_main_loop(&mut self) -> Result<(), anyhow::Error> {
+    async fn start_main_loop(&mut self) -> Result<(), anyhow::Error> {
         loop {
             self.terminal.draw(|frame| {
                 let _ = self.app.render(frame);
             })?;
 
-            if self.read_key()? {
-                break;
+            match self.read_key()? {
+                KeyboardAction::None => {}
+                KeyboardAction::Exit => {
+                    self.app_sender.send(AppSignal::Exit).await?;
+                    break;
+                }
+
+                KeyboardAction::Download => {
+                    self.app_sender
+                        .send(AppSignal::Download {
+                            url: self.app.url_input.value.clone(),
+                        })
+                        .await?;
+                }
             }
         }
 
@@ -78,9 +96,16 @@ impl Drop for Boostrap {
 
 /// # Errors
 /// Boostrap TUI failed.
-pub fn boostrap_tui() -> Result<(), anyhow::Error> {
-    let mut boostrap = Boostrap::enter(App::default())?;
-    boostrap.start_main_loop()?;
+pub async fn boostrap_tui() -> Result<(), anyhow::Error> {
+    use tokio::spawn;
+
+    let (sender, receiver) = mpsc::channel(16);
+    let app_sender = AppSender::new(sender);
+    let app_core = AppCore::new(receiver);
+    spawn(app_core.run());
+
+    let mut boostrap = Boostrap::enter(App::default(), app_sender)?;
+    boostrap.start_main_loop().await?;
     boostrap.leave()?;
 
     Ok(())
