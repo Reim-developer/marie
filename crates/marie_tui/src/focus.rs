@@ -1,6 +1,6 @@
 use crossterm::event::KeyCode;
 
-#[derive(Default)]
+#[derive(Default, PartialEq, Eq)]
 pub enum Focus {
     #[default]
     UrlInput,
