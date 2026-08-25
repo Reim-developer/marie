@@ -18,7 +18,7 @@ use ratatui::{Terminal, backend::CrosstermBackend};
 use tokio::sync::mpsc;
 
 type StdoutTerm = Terminal<CrosstermBackend<Stdout>>;
-pub struct Boostrap {
+struct Boostrap {
     terminal: StdoutTerm,
     app: App,
     app_sender: AppSender,
