@@ -5,12 +5,14 @@ use std::rc::Rc;
 use crate::components::button::{Button, ButtonProperties};
 use crate::components::input_textbox::InputTextbox;
 use crate::components::simple_help::render_simple_help;
+use crate::components::table_list::TableList;
 use crate::focus::Focus;
 
 #[derive(Default)]
 pub struct App {
     pub url_input: InputTextbox,
     pub download_button: Button,
+    pub features_order: TableList,
     pub focus: Focus,
 }
 
@@ -58,16 +60,23 @@ impl App {
 
     /// # Errors
     /// Render TUI application failed.
-    pub fn render(&self, frame: &mut Frame) -> Result<(), anyhow::Error> {
+    pub fn render(&mut self, frame: &mut Frame) -> Result<(), anyhow::Error> {
         let layout = Layout::default()
             .direction(Direction::Vertical)
             .constraints(Self::CONSTRAINTS)
             .split(frame.area());
 
+        self.features_order
+            .title("Download Options".into())
+            .rows(vec![
+                vec!["ALL Image".into()],
+                vec!["ALL Image in URL(s)".into()],
+            ])
+            .render(frame, layout[0]);
+
         let input_layout = Self::input_layout(&layout);
         self.render_input_url(&input_layout, frame)?;
         self.render_download_button(frame, &input_layout)?;
-
         render_simple_help(frame, &layout[2]);
         Ok(())
     }
