@@ -1,4 +1,5 @@
-use std::io::{self, Stdout};
+use std::io::{self, Stdout, stdout};
+use std::panic::{set_hook, take_hook};
 
 use crate::app::App;
 use crate::core::app::AppCore;
@@ -37,6 +38,15 @@ impl Boostrap {
             app,
             app_sender,
         })
+    }
+
+    fn panic_hook() {
+        let original_hook = take_hook();
+        set_hook(Box::new(move |info| {
+            let _ = disable_raw_mode();
+            let _ = execute!(stdout(), LeaveAlternateScreen);
+            original_hook(info);
+        }));
     }
 
     fn leave(mut self) -> Result<(), anyhow::Error> {
@@ -105,6 +115,7 @@ pub async fn boostrap_tui() -> Result<(), anyhow::Error> {
     spawn(app_core.run());
 
     let mut boostrap = Boostrap::enter(App::default(), app_sender)?;
+    Boostrap::panic_hook();
     boostrap.start_main_loop().await?;
     boostrap.leave()?;
 
