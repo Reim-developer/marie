@@ -8,33 +8,30 @@ use ratatui::{
 use crate::utils::focused_style;
 
 #[derive(Default)]
-pub struct Button;
-
-pub struct ButtonProperties {
+pub struct Button {
     border_title: String,
     text: String,
 }
 
-impl ButtonProperties {
-    #[must_use]
-    pub const fn new(border_title: String, text: String) -> Self {
-        Self { border_title, text }
-    }
-}
-
-type BT = ButtonProperties;
 impl Button {
-    fn render_button_style(
-        frame: &mut Frame,
-        area: Rect,
-        style: Style,
-        properties: BT,
-    ) {
+    pub fn set_text(&mut self, title: String) -> &mut Self {
+        self.text = title;
+
+        self
+    }
+
+    pub fn set_border_title(&mut self, border_title: String) -> &mut Self {
+        self.border_title = border_title;
+
+        self
+    }
+
+    fn render_button_style(&self, frame: &mut Frame, area: Rect, style: Style) {
         type P<'a> = Paragraph<'a>;
         type B<'a> = Block<'a>;
 
-        let block = B::bordered().title(properties.border_title);
-        let button = P::new(properties.text).block(block).style(style);
+        let block = B::bordered().title(self.border_title.clone());
+        let button = P::new(self.text.clone()).block(block).style(style);
 
         frame.render_widget(button, area);
     }
@@ -42,14 +39,14 @@ impl Button {
     /// # Errors
     /// Render `DownloadButton` component failed.
     pub fn render(
-        &self,
+        &mut self,
         frame: &mut Frame,
         area: &Rect,
         focused: bool,
-        properties: BT,
     ) -> Result<(), anyhow::Error> {
         let style = focused_style(focused);
-        Self::render_button_style(frame, *area, style, properties);
+
+        self.render_button_style(frame, *area, style);
         Ok(())
     }
 }
