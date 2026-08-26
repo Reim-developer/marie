@@ -1,3 +1,6 @@
+#[cfg(debug_assertions)]
+use crate::utils::{clean_debug_file, debug_to_file};
+
 use crate::{app::App, focus::Focus};
 use crossterm::event::KeyCode;
 
@@ -18,6 +21,7 @@ impl KeyboardAction {
     }
 
     pub fn keyboard(key: KeyCode, app: &mut App) -> Self {
+        debug_to_file(&format!("KeyCodePressed: {key:?}"), "debug.txt");
         match key {
             KeyCode::Left | KeyCode::Right => {
                 app.focus.handle(key);
@@ -26,6 +30,7 @@ impl KeyboardAction {
 
             KeyCode::Esc => {
                 if app.focus != Focus::UrlInput {
+                    clean_debug_file("debug.txt");
                     return Self::Exit;
                 }
             }
@@ -41,7 +46,6 @@ impl KeyboardAction {
                 }
             },
         }
-
         Self::None
     }
 
