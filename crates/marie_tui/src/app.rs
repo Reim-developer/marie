@@ -2,7 +2,7 @@ use ratatui::layout::{Constraint, Direction, Rect};
 use ratatui::{Frame, layout::Layout};
 use std::rc::Rc;
 
-use crate::components::button::{Button, ButtonProperties};
+use crate::components::button::Button;
 use crate::components::input_textbox::InputTextbox;
 use crate::components::simple_help::render_simple_help;
 use crate::components::table_list::TableList;
@@ -43,17 +43,16 @@ impl App {
     }
 
     fn render_download_button(
-        &self,
+        &mut self,
         frame: &mut Frame,
         layout: &Rc<[Rect]>,
     ) -> Result<(), anyhow::Error> {
-        type BP = ButtonProperties;
-        type S = String;
         let focused = matches!(self.focus, Focus::DownloadButton);
 
-        let properties = BP::new(S::from("Action"), S::from(" Download "));
         self.download_button
-            .render(frame, &layout[1], focused, properties)?;
+            .set_border_title("Action".into())
+            .set_text(" Download ".into())
+            .render(frame, &layout[1], focused)?;
 
         Ok(())
     }
@@ -61,7 +60,7 @@ impl App {
     /// # Errors
     /// Render TUI application failed.
     pub fn render(&mut self, frame: &mut Frame) -> Result<(), anyhow::Error> {
-        let layout = Layout::default()
+        let app_layout = Layout::default()
             .direction(Direction::Vertical)
             .constraints(Self::CONSTRAINTS)
             .split(frame.area());
@@ -69,15 +68,15 @@ impl App {
         self.features_order
             .title("Download Options".into())
             .rows(vec![
-                vec!["ALL Image".into()],
-                vec!["ALL Image in URL(s)".into()],
+                vec![" 1. ALL Image".into()],
+                vec![" 2. ALL Image in URL(s)".into()],
             ])
-            .render(frame, layout[0]);
+            .render(frame, app_layout[0]);
 
-        let input_layout = Self::input_layout(&layout);
+        let input_layout = Self::input_layout(&app_layout);
         self.render_input_url(&input_layout, frame)?;
         self.render_download_button(frame, &input_layout)?;
-        render_simple_help(frame, &layout[2]);
+        render_simple_help(frame, &app_layout[2]);
         Ok(())
     }
 }
