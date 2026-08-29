@@ -13,6 +13,11 @@ pub mod components {
     pub mod table_list;
 }
 
+pub(crate) mod ui {
+    pub mod download_button;
+    pub mod shared;
+}
+
 pub mod core {
     pub mod app;
     pub mod sender;
