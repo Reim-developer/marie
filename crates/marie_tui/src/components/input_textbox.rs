@@ -46,17 +46,10 @@ impl InputTextbox {
 
     /// # Errors
     /// Handle event or rendering TUI component failed.
-    pub fn render(
-        &self,
-        frame: &mut Frame,
-        area: &Rect,
-        focused: bool,
-    ) -> Result<(), anyhow::Error> {
+    pub fn render(&self, frame: &mut Frame, area: &Rect, focused: bool) {
         self.render_input(frame, *area, focused);
         if focused {
             self.render_cursor(*area, frame);
         }
-
-        Ok(())
     }
 }
