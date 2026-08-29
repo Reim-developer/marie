@@ -38,15 +38,9 @@ impl Button {
 
     /// # Errors
     /// Render `DownloadButton` component failed.
-    pub fn render(
-        &mut self,
-        frame: &mut Frame,
-        area: &Rect,
-        focused: bool,
-    ) -> Result<(), anyhow::Error> {
+    pub fn render(&mut self, frame: &mut Frame, area: &Rect, focused: bool) {
         let style = focused_style(focused);
 
         self.render_button_style(frame, *area, style);
-        Ok(())
     }
 }
