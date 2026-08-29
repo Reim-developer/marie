@@ -1,17 +1,16 @@
-use ratatui::layout::{Constraint, Direction, Rect};
-use ratatui::{Frame, layout::Layout};
 use std::rc::Rc;
 
-use crate::components::button::Button;
 use crate::components::input_textbox::InputTextbox;
 use crate::components::simple_help::render_simple_help;
 use crate::components::table_list::TableList;
 use crate::focus::Focus;
+use crate::ui::download_button::DownloadButton;
+use ratatui::layout::{Constraint, Direction, Rect};
+use ratatui::{Frame, layout::Layout};
 
 #[derive(Default)]
 pub struct App {
     pub url_input: InputTextbox,
-    pub download_button: Button,
     pub features_order: TableList,
     pub focus: Focus,
 }
@@ -28,33 +27,12 @@ impl App {
             .split(layout[1])
     }
 
-    fn render_input_url(
-        &self,
-        layout: &Rc<[Rect]>,
-        frame: &mut Frame,
-    ) -> Result<(), anyhow::Error> {
+    fn render_input_url(&self, layout: &Rc<[Rect]>, frame: &mut Frame) {
         self.url_input.render(
             frame,
             &layout[0],
             matches!(self.focus, Focus::UrlInput),
-        )?;
-
-        Ok(())
-    }
-
-    fn render_download_button(
-        &mut self,
-        frame: &mut Frame,
-        layout: &Rc<[Rect]>,
-    ) -> Result<(), anyhow::Error> {
-        let focused = matches!(self.focus, Focus::DownloadButton);
-
-        self.download_button
-            .set_border_title("Action".into())
-            .set_text(" Download ".into())
-            .render(frame, &layout[1], focused)?;
-
-        Ok(())
+        );
     }
 
     /// # Errors
@@ -74,8 +52,10 @@ impl App {
             .render(frame, app_layout[0]);
 
         let input_layout = Self::input_layout(&app_layout);
-        self.render_input_url(&input_layout, frame)?;
-        self.render_download_button(frame, &input_layout)?;
+        self.render_input_url(&input_layout, frame);
+
+        DownloadButton::render(frame, &self.focus);
+
         render_simple_help(frame, &app_layout[2]);
         Ok(())
     }
