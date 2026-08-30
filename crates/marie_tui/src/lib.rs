@@ -23,8 +23,9 @@ pub(crate) mod ui {
     pub mod url_input;
 }
 
-pub mod core {
+pub(crate) mod core {
     pub mod app;
+    pub mod event;
     pub mod sender;
     pub mod signal;
 }
