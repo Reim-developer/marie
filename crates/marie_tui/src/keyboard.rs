@@ -23,7 +23,7 @@ impl KeyboardAction {
     pub fn keyboard(key: KeyCode, app: &mut App) -> Self {
         debug_to_file(&format!("KeyCodePressed: {key:?}"), "debug.txt");
         match key {
-            KeyCode::Left | KeyCode::Right => {
+            KeyCode::Left | KeyCode::Up | KeyCode::Down | KeyCode::Right => {
                 app.focus.handle(key);
                 return Self::None;
             }
@@ -44,7 +44,11 @@ impl KeyboardAction {
                         return Self::Download;
                     }
                 }
-                Focus::FeaturesTable => {}
+                Focus::FeaturesTable => match key {
+                    KeyCode::Char('1') => app.features_selected = Some(0),
+                    KeyCode::Char('2') => app.features_selected = Some(1),
+                    _ => {}
+                },
             },
         }
         Self::None
