@@ -73,7 +73,7 @@ impl Boostrap {
     async fn start_main_loop(&mut self) -> Result<(), anyhow::Error> {
         loop {
             self.terminal.draw(|frame| {
-                let _ = self.app.render(frame);
+                self.app.render(frame);
             })?;
 
             match self.read_key()? {
@@ -86,7 +86,7 @@ impl Boostrap {
                 KeyboardAction::Download => {
                     self.app_sender
                         .send(AppSignal::Download {
-                            url: self.app.url_input.value.clone(),
+                            url: self.app.url_value.clone(),
                         })
                         .await?;
                 }
