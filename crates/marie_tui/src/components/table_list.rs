@@ -4,6 +4,8 @@ use ratatui::{
     widgets::{Block, Borders, Row, Table},
 };
 
+use crate::utils::focused_style;
+
 #[derive(Default)]
 pub struct TableList {
     title: String,
@@ -23,7 +25,7 @@ impl TableList {
         self
     }
 
-    pub fn render(&self, frame: &mut Frame, area: Rect) {
+    pub fn render(&self, frame: &mut Frame, area: Rect, focused: bool) {
         let rows: Vec<Row> = self
             .rows
             .iter()
@@ -40,7 +42,8 @@ impl TableList {
                     .borders(Borders::ALL)
                     .title(self.title.clone()),
             )
-            .column_spacing(1);
+            .column_spacing(1)
+            .style(focused_style(focused));
 
         frame.render_widget(table, area);
     }
