@@ -2,75 +2,75 @@ use ratatui::{
     Frame,
     layout::Rect,
     style::{Color, Style},
-    widgets::{Block, Borders, Paragraph},
+    widgets::{Block, Borders, Padding, Paragraph},
 };
 
-#[derive(Default)]
-pub struct TextPanel {
-    pub title: String,
-    pub title_bottom: String,
-    pub logs: Vec<String>,
+pub struct TextPanel<'a> {
+    pub title: &'a str,
+    pub logs: &'a [String],
     pub scroll: usize,
+    pub hint: Option<&'a str>,
 }
 
-impl TextPanel {
-    pub fn add(&mut self, msg: impl Into<String>) {
-        self.logs.push(msg.into());
+impl<'a> TextPanel<'a> {
+    #[must_use]
+    pub const fn new(
+        title: &'a str,
+        logs: &'a [String],
+        scroll: usize,
+    ) -> Self {
+        Self {
+            title,
+            logs,
+            scroll,
+            hint: None,
+        }
     }
 
-    pub fn title(&mut self, title: String) -> &mut Self {
-        self.title = title;
+    #[must_use]
+    pub const fn hint(mut self, hint: &'a str) -> Self {
+        self.hint = Some(hint);
 
         self
     }
 
-    pub fn title_bottom(&mut self, title: String) -> &mut Self {
-        self.title_bottom = title;
-
-        self
-    }
-
-    pub const fn scroll_up(&mut self) {
-        self.scroll = self.scroll.saturating_sub(1);
-    }
-
-    pub const fn scroll_down(&mut self) {
-        self.scroll += 1;
-    }
-
-    pub fn render(&mut self, frame: &mut Frame, area: Rect, focused: bool) {
-        let block = Block::default()
+    pub fn render(
+        &self,
+        frame: &mut Frame,
+        area: Rect,
+        focused: bool,
+    ) -> usize {
+        let mut block = Block::default()
             .borders(Borders::ALL)
             .border_style(Style::default().fg(if focused {
                 Color::Cyan
             } else {
                 Color::White
             }))
-            .title(self.title.clone())
-            .title_bottom(self.title_bottom.clone())
+            .title(self.title)
+            .padding(Padding::left(3))
             .style(Style::default().fg(Color::Gray));
 
-        let inner = block.inner(area);
-        let visible = inner.height as usize;
-        let max_scroll = self.logs.len().saturating_sub(visible);
-        self.scroll = self.scroll.min(max_scroll);
+        if focused && let Some(hint) = self.hint {
+            block = block.title_bottom(hint);
+        }
 
         let content = if self.logs.is_empty() {
-            "   Nothing to show.".to_string()
+            "No thing to show.".to_string()
         } else {
-            self.logs
-                .iter()
-                .skip(self.scroll)
-                .take(visible.max(1))
-                .map(|s| format!("   {s}"))
-                .collect::<Vec<_>>()
-                .join("\n")
+            self.logs.join("\n")
         };
+
+        let max_scroll = self.logs.len().saturating_sub(1);
+        let scroll = self.scroll.min(max_scroll);
 
         let paragraph = Paragraph::new(content)
             .block(block)
-            .style(Style::default().fg(Color::Gray));
+            .style(Style::default().fg(Color::Gray))
+            .scroll((u16::try_from(scroll).unwrap_or(0), 0));
 
         frame.render_widget(paragraph, area);
+
+        scroll
     }
 }
