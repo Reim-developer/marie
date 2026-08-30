@@ -11,11 +11,13 @@ pub mod components {
     pub mod input_textbox;
     pub mod simple_help;
     pub mod table_list;
+    pub mod text_panel;
 }
 
 pub(crate) mod ui {
     pub mod download_button;
     pub mod features_table;
+    pub mod log_panel;
     pub mod shared;
     pub mod simple_help;
     pub mod url_input;
