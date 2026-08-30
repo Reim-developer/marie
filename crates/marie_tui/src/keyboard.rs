@@ -49,6 +49,8 @@ impl KeyboardAction {
                     KeyCode::Char('2') => app.features_selected = Some(1),
                     _ => {}
                 },
+
+                Focus::LogPanel => {}
             },
         }
         Self::None
