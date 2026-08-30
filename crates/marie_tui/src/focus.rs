@@ -5,6 +5,7 @@ pub enum Focus {
     #[default]
     UrlInput,
     DownloadButton,
+    FeaturesTable,
 }
 
 impl Focus {
