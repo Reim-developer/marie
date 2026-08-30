@@ -1,5 +1,5 @@
 #![deny(clippy::pedantic, clippy::all, clippy::nursery, clippy::perf)]
 
-pub mod networking;
+pub mod net;
 pub mod scraper;
 pub mod selector;
