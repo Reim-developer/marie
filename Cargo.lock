@@ -1208,6 +1208,7 @@ dependencies = [
  "anyhow",
  "reqwest",
  "scraper",
+ "thiserror 2.0.20",
  "tokio",
 ]
 
