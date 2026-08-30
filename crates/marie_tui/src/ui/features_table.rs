@@ -11,17 +11,8 @@ use crate::{
 pub struct FeaturesTable;
 
 impl FeaturesTable {
-    pub fn render(frame: &mut Frame, focus: &Focus, selected: Option<usize>) {
-        let focused = matches!(focus, Focus::FeaturesTable);
-
-        let app_layout = app_layout(frame);
-        let mut table_list = TableList::default();
-
-        let rows = vec![
-            vec![Self::line(0, "[1] Page Images", selected)],
-            vec![Self::line(1, "[2] Site Images", selected)],
-        ];
-        let description = match selected {
+    fn description(selected: Option<usize>) -> Line<'static> {
+        match selected {
             Some(0) => Line::from(Span::styled(
                 "Download all images from current page only.",
                 Style::default().fg(Color::Gray),
@@ -31,13 +22,27 @@ impl FeaturesTable {
                 Style::default().fg(Color::Gray),
             )),
             _ => Line::from(Span::styled("", Style::default().fg(Color::Gray))),
-        };
+        }
+    }
+
+    fn rows(selected: Option<usize>) -> Vec<Vec<Line<'static>>> {
+        vec![
+            vec![Self::line(0, "[1] Page Images", selected)],
+            vec![Self::line(1, "[2] Site Images", selected)],
+        ]
+    }
+
+    pub fn render(frame: &mut Frame, focus: &Focus, selected: Option<usize>) {
+        let focused = matches!(focus, Focus::FeaturesTable);
+
+        let app_layout = app_layout(frame);
+        let mut table_list = TableList::default();
 
         table_list
             .title("Download Options".into())
-            .rows(rows)
+            .rows(Self::rows(selected))
             .border_color(if focused { Color::Cyan } else { Color::White })
-            .description(description)
+            .description(Self::description(selected))
             .render(frame, app_layout[0], focused);
     }
 
