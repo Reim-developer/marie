@@ -50,7 +50,15 @@ impl KeyboardAction {
                     _ => {}
                 },
 
-                Focus::LogPanel => {}
+                Focus::LogPanel => match key {
+                    KeyCode::Char('k') => {
+                        app.log_scroll = app.log_scroll.saturating_sub(1);
+                    }
+                    KeyCode::Char('j') => {
+                        app.log_scroll += 1;
+                    }
+                    _ => {}
+                },
             },
         }
         Self::None
