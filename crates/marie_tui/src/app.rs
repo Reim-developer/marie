@@ -1,6 +1,7 @@
 use crate::focus::Focus;
 use crate::ui::download_button::DownloadButton;
 use crate::ui::features_table::FeaturesTable;
+use crate::ui::log_panel::LogPanel;
 use crate::ui::simple_help::SimpleHelp;
 use crate::ui::url_input::UrlInput;
 use ratatui::Frame;
@@ -17,6 +18,7 @@ impl App {
         UrlInput::render(frame, &self.focus, &self.url_value);
         DownloadButton::render(frame, &self.focus);
         FeaturesTable::render(frame, &self.focus, self.features_selected);
+        LogPanel::render(frame, &self.focus);
         SimpleHelp::render(frame);
     }
 }
