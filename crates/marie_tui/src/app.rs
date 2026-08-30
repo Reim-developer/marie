@@ -9,13 +9,14 @@ use ratatui::Frame;
 pub struct App {
     pub url_value: String,
     pub focus: Focus,
+    pub features_selected: Option<usize>,
 }
 
 impl App {
     pub fn render(&mut self, frame: &mut Frame) {
         UrlInput::render(frame, &self.focus, &self.url_value);
         DownloadButton::render(frame, &self.focus);
-        FeaturesTable::render(frame, &self.focus);
+        FeaturesTable::render(frame, &self.focus, self.features_selected);
         SimpleHelp::render(frame);
     }
 }
