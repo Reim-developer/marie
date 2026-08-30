@@ -8,6 +8,7 @@ pub enum Focus {
     UrlInput,
     DownloadButton,
     FeaturesTable,
+    LogPanel,
 }
 
 impl Focus {
@@ -22,24 +23,38 @@ impl Focus {
     }
 
     pub const fn left(&mut self) {
-        *self = Self::UrlInput;
+        *self = match self {
+            Self::DownloadButton => Self::UrlInput,
+            Self::FeaturesTable => Self::LogPanel,
+            Self::LogPanel => Self::FeaturesTable,
+            Self::UrlInput => Self::DownloadButton,
+        }
     }
 
     pub const fn right(&mut self) {
-        *self = Self::DownloadButton;
+        *self = match self {
+            Self::DownloadButton => Self::UrlInput,
+            Self::UrlInput => Self::DownloadButton,
+            Self::LogPanel => Self::FeaturesTable,
+            Self::FeaturesTable => Self::LogPanel,
+        }
     }
 
     pub const fn up(&mut self) {
         *self = match self {
             Self::FeaturesTable => Self::UrlInput,
-            Self::UrlInput | Self::DownloadButton => FeaturesTable,
+            Self::UrlInput => FeaturesTable,
+            Self::LogPanel => Self::DownloadButton,
+            Self::DownloadButton => Self::LogPanel,
         }
     }
 
     pub const fn down(&mut self) {
         *self = match self {
             Self::FeaturesTable => Self::UrlInput,
-            Self::UrlInput | Self::DownloadButton => Self::FeaturesTable,
+            Self::UrlInput => Self::FeaturesTable,
+            Self::LogPanel => Self::DownloadButton,
+            Self::DownloadButton => Self::LogPanel,
         }
     }
 }
