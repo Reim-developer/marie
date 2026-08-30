@@ -1,8 +1,10 @@
 use std::io::{self, Stdout, stdout};
 use std::panic::{set_hook, take_hook};
+use std::time::Duration;
 
 use crate::app::App;
 use crate::core::app::AppCore;
+use crate::core::event::AppEvent;
 use crate::core::sender::AppSender;
 use crate::core::signal::AppSignal;
 use crate::keyboard::KeyboardAction;
@@ -23,10 +25,15 @@ struct Boostrap {
     terminal: StdoutTerm,
     app: App,
     app_sender: AppSender,
+    event_rx: mpsc::Receiver<AppEvent>,
 }
 
 impl Boostrap {
-    fn enter(app: App, app_sender: AppSender) -> Result<Self, anyhow::Error> {
+    fn enter(
+        app: App,
+        app_sender: AppSender,
+        event_rx: mpsc::Receiver<AppEvent>,
+    ) -> Result<Self, anyhow::Error> {
         enable_raw_mode()?;
 
         let stdout = io::stdout();
@@ -37,6 +44,7 @@ impl Boostrap {
             terminal: Terminal::new(backend)?,
             app,
             app_sender,
+            event_rx,
         })
     }
 
@@ -72,23 +80,37 @@ impl Boostrap {
 
     async fn start_main_loop(&mut self) -> Result<(), anyhow::Error> {
         loop {
+            if let Ok(event) = self.event_rx.try_recv() {
+                match event {
+                    AppEvent::Log(text) => self.app.push_log(text),
+                    AppEvent::Error(e) => self.app.push_log(e),
+                }
+            }
+
             self.terminal.draw(|frame| {
                 self.app.render(frame);
             })?;
 
-            match self.read_key()? {
-                KeyboardAction::None => {}
-                KeyboardAction::Exit => {
-                    self.app_sender.send(AppSignal::Exit).await?;
-                    break;
-                }
+            if event::poll(Duration::from_millis(50))? {
+                match self.read_key()? {
+                    KeyboardAction::None => {}
+                    KeyboardAction::Exit => {
+                        self.app_sender.send(AppSignal::Exit).await?;
+                        break;
+                    }
 
-                KeyboardAction::Download => {
-                    self.app_sender
-                        .send(AppSignal::Download {
-                            url: self.app.url_value.clone(),
-                        })
-                        .await?;
+                    KeyboardAction::Download => {
+                        let url = self.app.url_value.clone();
+                        if url.is_empty() {
+                            self.app.push_log("URL is empty.");
+                            continue;
+                        }
+
+                        self.app.push_log(format!("Fetching {url}"));
+                        self.app_sender
+                            .send(AppSignal::Download { url })
+                            .await?;
+                    }
                 }
             }
         }
@@ -109,12 +131,14 @@ impl Drop for Boostrap {
 pub async fn boostrap_tui() -> Result<(), anyhow::Error> {
     use tokio::spawn;
 
-    let (sender, receiver) = mpsc::channel(16);
-    let app_sender = AppSender::new(sender);
-    let app_core = AppCore::new(receiver);
+    let (cmd_tx, cmd_rx) = mpsc::channel(16);
+    let (evt_tx, evt_rx) = mpsc::channel(16);
+    let app_sender = AppSender::new(cmd_tx);
+    let app_core = AppCore::new(cmd_rx, evt_tx);
+
     spawn(app_core.run());
 
-    let mut boostrap = Boostrap::enter(App::default(), app_sender)?;
+    let mut boostrap = Boostrap::enter(App::default(), app_sender, evt_rx)?;
     Boostrap::panic_hook();
     boostrap.start_main_loop().await?;
     boostrap.leave()?;
