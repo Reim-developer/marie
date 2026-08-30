@@ -15,7 +15,10 @@ pub mod components {
 
 pub(crate) mod ui {
     pub mod download_button;
+    pub mod features_table;
     pub mod shared;
+    pub mod simple_help;
+    pub mod url_input;
 }
 
 pub mod core {
