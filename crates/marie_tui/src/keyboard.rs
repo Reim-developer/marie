@@ -36,7 +36,7 @@ impl KeyboardAction {
             }
             _ => match app.focus {
                 Focus::UrlInput => {
-                    Self::textbox_input(key, &mut app.url_input.value);
+                    Self::textbox_input(key, &mut app.url_value);
                 }
 
                 Focus::DownloadButton => {
@@ -44,6 +44,7 @@ impl KeyboardAction {
                         return Self::Download;
                     }
                 }
+                Focus::FeaturesTable => {}
             },
         }
         Self::None
