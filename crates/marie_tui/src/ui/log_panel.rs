@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use ratatui::Frame;
 
 use crate::{
@@ -8,14 +10,21 @@ use crate::{
 pub struct LogPanel;
 
 impl LogPanel {
-    pub fn render(frame: &mut Frame, focus: &Focus) {
+    pub fn render(
+        frame: &mut Frame,
+        focus: &Focus,
+        log_msg: &VecDeque<String>,
+        scroll: &mut usize,
+    ) {
         let focused = matches!(focus, Focus::LogPanel);
         let content_layout = content_layout(frame);
 
-        let mut text_panel = TextPanel::default();
-        text_panel
-            .title_bottom("k, j to navigate".into())
-            .title("Download Log".into())
+        let (front, back) = log_msg.as_slices();
+        let logs_ref: Vec<String> =
+            front.iter().chain(back.iter()).cloned().collect();
+
+        *scroll = TextPanel::new("Download Log", &logs_ref, *scroll)
+            .hint("k, j to navigate")
             .render(frame, content_layout[1], focused);
     }
 }
