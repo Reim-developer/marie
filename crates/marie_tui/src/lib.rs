@@ -2,8 +2,10 @@
 
 pub mod app;
 pub mod boostrap;
+pub mod event_loop;
 pub mod focus;
 pub mod keyboard;
+pub mod tui;
 pub mod utils;
 
 pub mod components {
