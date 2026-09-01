@@ -7,8 +7,8 @@ use crate::{
 pub struct DownloadButton;
 
 impl DownloadButton {
-    pub fn render(frame: &mut Frame, focus: &Focus) {
-        let focused = matches!(focus, Focus::DownloadButton);
+    pub fn render(frame: &mut Frame, focus: &Focus, disabled: bool) {
+        let focused = matches!(focus, Focus::DownloadButton) && !disabled;
         let layout = input_layout(frame);
 
         Button::default()
