@@ -3,9 +3,10 @@ use futures_util::{FutureExt, StreamExt};
 use tokio::sync::mpsc;
 
 use crate::{
-    app::App,
+    app::{App, AppState},
     core::{event::AppEvent, sender::AppSender, signal::AppSignal},
     keyboard::KeyboardAction,
+    log_entry::LogEntry,
     tui::TuiGuard,
 };
 
@@ -89,22 +90,29 @@ impl EventLoop {
 
                     KeyboardAction::Download => {
                         let url = self.app.url_value.clone();
-                        if url.is_empty() {
-                            self.app.push_log("URL is empty.");
-                        } else {
-                            self.app.push_log(format!("Fetching {url}"));
-                            self.app_sender
-                                .send(AppSignal::Download { url })
-                                .await?;
-                        }
+                        let scope = self.app.features_selected;
+
+                        self.app.push_log(LogEntry::Info(format!(
+                            "Fetching {url}"
+                        )));
+                        self.app.state = AppState::Busy;
+                        self.app_sender
+                            .send(AppSignal::Download { url, scope })
+                            .await?;
                     }
                 }
             }
 
-            Input::Core(event) => match event {
-                AppEvent::Log(text) => self.app.push_log(text),
-                AppEvent::Error(e) => self.app.push_log(e),
-            },
+            Input::Core(event) => {
+                self.app.state = AppState::Idle;
+
+                match event {
+                    AppEvent::Log(text) => {
+                        self.app.push_log(LogEntry::Success(text));
+                    }
+                    AppEvent::Error(e) => self.app.push_log(LogEntry::Error(e)),
+                }
+            }
         }
 
         Ok(false)
