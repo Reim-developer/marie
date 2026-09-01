@@ -59,3 +59,52 @@ impl App {
         SimpleHelp::render(frame);
     }
 }
+
+#[allow(unused_imports)]
+mod tests {
+    use super::{App, AppState, MAX_LOG_LINES};
+    use crate::log_entry::LogEntry;
+
+    #[test]
+    fn push_log_adds_entry() {
+        let mut app = App::default();
+
+        app.push_log(LogEntry::Info("Hello World!".into()));
+        assert_eq!(app.log_entries.len(), 1);
+    }
+
+    #[test]
+    fn push_log_pops_front_when_full() {
+        let mut app = App::default();
+
+        for i in 0..MAX_LOG_LINES + 5 {
+            app.push_log(LogEntry::Info(format!("{i}")));
+        }
+
+        assert_eq!(app.log_entries.len(), MAX_LOG_LINES);
+        assert!(app.log_entries.front().unwrap().text() != "0");
+    }
+
+    #[test]
+    #[allow(clippy::field_reassign_with_default)]
+    fn push_log_clamps_scroll_when_pop() {
+        let mut app = App::default();
+        app.log_scroll = 5;
+
+        for _ in 0..MAX_LOG_LINES {
+            app.push_log(LogEntry::Info("x".into()));
+        }
+
+        app.push_log(LogEntry::Info("overflow".into()));
+        assert_eq!(app.log_scroll, 4);
+    }
+
+    #[test]
+    fn is_busy_true_when_busy() {
+        let mut app = App::default();
+        assert!(!app.is_busy());
+
+        app.state = AppState::Busy;
+        assert!(app.is_busy());
+    }
+}
