@@ -1,7 +1,9 @@
 #[cfg(debug_assertions)]
 use crate::utils::{clean_debug_file, debug_to_file};
 
-use crate::{app::App, focus::Focus};
+use crate::{
+    app::App, download_scope::DownloadScope, focus::Focus, log_entry::LogEntry,
+};
 use crossterm::event::KeyCode;
 
 #[derive(Debug, Clone, Copy)]
@@ -41,12 +43,23 @@ impl KeyboardAction {
 
                 Focus::DownloadButton => {
                     if key == KeyCode::Enter {
+                        if app.is_busy() {
+                            app.push_log(LogEntry::Error(
+                                "Download in progress.".into(),
+                            ));
+                            return Self::None;
+                        }
+
                         return Self::Download;
                     }
                 }
                 Focus::FeaturesTable => match key {
-                    KeyCode::Char('1') => app.features_selected = Some(0),
-                    KeyCode::Char('2') => app.features_selected = Some(1),
+                    KeyCode::Char('1') => {
+                        app.features_selected = DownloadScope::PageImages;
+                    }
+                    KeyCode::Char('2') => {
+                        app.features_selected = DownloadScope::SiteImages;
+                    }
                     _ => {}
                 },
 
@@ -56,6 +69,12 @@ impl KeyboardAction {
                     }
                     KeyCode::Char('j') => {
                         app.log_scroll += 1;
+                    }
+                    KeyCode::Char('h') => {
+                        app.log_hscroll = app.log_hscroll.saturating_sub(1);
+                    }
+                    KeyCode::Char('l') => {
+                        app.log_hscroll += 1;
                     }
                     _ => {}
                 },
