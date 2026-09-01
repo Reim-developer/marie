@@ -95,3 +95,48 @@ impl KeyboardAction {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::KeyboardAction;
+    use crossterm::event::KeyCode;
+
+    #[test]
+    fn test_input_appends_char() {
+        let mut s = String::new();
+
+        KeyboardAction::textbox_input(KeyCode::Char('a'), &mut s);
+        KeyboardAction::textbox_input(KeyCode::Char('b'), &mut s);
+
+        assert_eq!(s, "ab");
+    }
+
+    #[test]
+    fn test_input_backspace_removes() {
+        let mut s = "ab".to_string();
+
+        KeyboardAction::textbox_input(KeyCode::Backspace, &mut s);
+        assert_eq!(s, "a");
+
+        KeyboardAction::textbox_input(KeyCode::Backspace, &mut s);
+        assert_eq!(s, "");
+        KeyboardAction::textbox_input(KeyCode::Backspace, &mut s);
+        assert_eq!(s, "");
+    }
+
+    #[test]
+    fn from_key_esc_is_exit() {
+        assert!(matches!(
+            KeyboardAction::from_key(KeyCode::Esc),
+            KeyboardAction::Exit
+        ));
+    }
+
+    #[test]
+    fn from_key_other_is_none() {
+        assert!(matches!(
+            KeyboardAction::from_key(KeyCode::Char('a')),
+            KeyboardAction::None
+        ));
+    }
+}
