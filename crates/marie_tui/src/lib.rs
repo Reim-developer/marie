@@ -2,9 +2,11 @@
 
 pub mod app;
 pub mod boostrap;
+pub mod download_scope;
 pub mod event_loop;
 pub mod focus;
 pub mod keyboard;
+pub mod log_entry;
 pub mod tui;
 pub mod utils;
 
