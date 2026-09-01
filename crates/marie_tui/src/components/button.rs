@@ -1,7 +1,7 @@
 use ratatui::{
     Frame,
     layout::Rect,
-    style::Style,
+    style::{Color, Style},
     widgets::{Block, Paragraph},
 };
 
@@ -11,6 +11,7 @@ use crate::utils::focused_style;
 pub struct Button {
     border_title: String,
     text: String,
+    disabled: bool,
 }
 
 impl Button {
@@ -22,6 +23,12 @@ impl Button {
 
     pub fn set_border_title(&mut self, border_title: String) -> &mut Self {
         self.border_title = border_title;
+
+        self
+    }
+
+    pub const fn set_disabled(&mut self, disabled: bool) -> &mut Self {
+        self.disabled = disabled;
 
         self
     }
@@ -39,7 +46,11 @@ impl Button {
     /// # Errors
     /// Render `DownloadButton` component failed.
     pub fn render(&mut self, frame: &mut Frame, area: &Rect, focused: bool) {
-        let style = focused_style(focused);
+        let style = if self.disabled {
+            Style::default().fg(Color::DarkGray)
+        } else {
+            focused_style(focused)
+        };
 
         self.render_button_style(frame, *area, style);
     }
