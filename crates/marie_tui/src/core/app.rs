@@ -1,7 +1,10 @@
 use marie_core::net::HttpClient;
 use tokio::sync::mpsc;
 
-use crate::core::{event::AppEvent, signal::AppSignal};
+use crate::{
+    core::{event::AppEvent, signal::AppSignal},
+    download_scope::DownloadScope,
+};
 
 type EventSender = mpsc::Sender<AppEvent>;
 type SignalReceiver = mpsc::Receiver<AppSignal>;
@@ -21,7 +24,7 @@ impl AppCore {
         }
     }
 
-    async fn download(&self, url: String) {
+    async fn download(&self, url: String, _scope: DownloadScope) {
         match self.client.fetch_text(url).await {
             Ok(text) => {
                 let _ = self.event_tx.send(AppEvent::Log(text)).await;
@@ -39,8 +42,8 @@ impl AppCore {
 
         while let Some(signal) = self.receiver.recv().await {
             match signal {
-                A::Download { url } => {
-                    self.download(url).await;
+                A::Download { url, scope } => {
+                    self.download(url, scope).await;
                 }
 
                 AppSignal::Exit => break,
