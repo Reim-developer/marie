@@ -29,3 +29,29 @@ impl From<String> for LogEntry {
         Self::Info(value)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::LogEntry;
+    use ratatui::style::Color;
+
+    #[test]
+    fn info_is_gray() {
+        assert_eq!(LogEntry::Info(String::new()).color(), Color::Gray);
+    }
+
+    #[test]
+    fn success_is_green() {
+        assert_eq!(LogEntry::Success(String::new()).color(), Color::Green);
+    }
+
+    #[test]
+    fn error_is_red() {
+        assert_eq!(LogEntry::Error(String::new()).color(), Color::Red);
+    }
+
+    #[test]
+    fn text_extracts_inner() {
+        assert_eq!(LogEntry::Info("hello".into()).text(), "hello");
+    }
+}
