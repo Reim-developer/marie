@@ -2,13 +2,17 @@ use ratatui::{
     Frame,
     layout::Rect,
     style::{Color, Style},
+    text::{Line, Span},
     widgets::{Block, Borders, Padding, Paragraph},
 };
 
+use crate::log_entry::LogEntry;
+
 pub struct TextPanel<'a> {
     pub title: &'a str,
-    pub logs: &'a [String],
+    pub logs: &'a [LogEntry],
     pub scroll: usize,
+    pub hscroll: usize,
     pub hint: Option<&'a str>,
 }
 
@@ -16,13 +20,15 @@ impl<'a> TextPanel<'a> {
     #[must_use]
     pub const fn new(
         title: &'a str,
-        logs: &'a [String],
+        logs: &'a [LogEntry],
         scroll: usize,
+        hscroll: usize,
     ) -> Self {
         Self {
             title,
             logs,
             scroll,
+            hscroll,
             hint: None,
         }
     }
@@ -39,7 +45,7 @@ impl<'a> TextPanel<'a> {
         frame: &mut Frame,
         area: Rect,
         focused: bool,
-    ) -> usize {
+    ) -> (usize, usize) {
         let mut block = Block::default()
             .borders(Borders::ALL)
             .border_style(Style::default().fg(if focused {
@@ -55,22 +61,38 @@ impl<'a> TextPanel<'a> {
             block = block.title_bottom(hint);
         }
 
-        let content = if self.logs.is_empty() {
-            "No thing to show.".to_string()
-        } else {
-            self.logs.join("\n")
-        };
-
-        let max_scroll = self.logs.len().saturating_sub(1);
+        let inner = block.inner(area);
+        let visible = inner.height as usize;
+        let max_scroll = self.logs.len().saturating_sub(visible);
         let scroll = self.scroll.min(max_scroll);
+
+        let content: Vec<Line> = if self.logs.is_empty() {
+            vec![Line::from(Span::styled(
+                "Nothing to show.",
+                Style::default().fg(Color::Gray),
+            ))]
+        } else {
+            self.logs
+                .iter()
+                .map(|entry| {
+                    Line::from(Span::styled(
+                        entry.text(),
+                        Style::default().fg(entry.color()),
+                    ))
+                })
+                .collect()
+        };
 
         let paragraph = Paragraph::new(content)
             .block(block)
             .style(Style::default().fg(Color::Gray))
-            .scroll((u16::try_from(scroll).unwrap_or(0), 0));
+            .scroll((
+                u16::try_from(scroll).unwrap_or(0),
+                u16::try_from(self.hscroll).unwrap_or(0),
+            ));
 
         frame.render_widget(paragraph, area);
 
-        scroll
+        (scroll, self.hscroll)
     }
 }
