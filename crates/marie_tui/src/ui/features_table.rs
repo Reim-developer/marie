@@ -5,34 +5,42 @@ use ratatui::{
 };
 
 use crate::{
-    components::table_list::TableList, focus::Focus, ui::shared::app_layout,
+    components::table_list::TableList, download_scope::DownloadScope,
+    focus::Focus, ui::shared::app_layout,
 };
 
 pub struct FeaturesTable;
 
 impl FeaturesTable {
-    fn description(selected: Option<usize>) -> Line<'static> {
+    fn description(selected: DownloadScope) -> Line<'static> {
         match selected {
-            Some(0) => Line::from(Span::styled(
+            DownloadScope::PageImages => Line::from(Span::styled(
                 "Download all images from current page only.",
                 Style::default().fg(Color::Gray),
             )),
-            Some(1) => Line::from(Span::styled(
+            DownloadScope::SiteImages => Line::from(Span::styled(
                 "Follow all internal links and download image across the entire site.",
                 Style::default().fg(Color::Gray),
             )),
-            _ => Line::from(Span::styled("", Style::default().fg(Color::Gray))),
         }
     }
 
-    fn rows(selected: Option<usize>) -> Vec<Vec<Line<'static>>> {
+    fn rows(selected: DownloadScope) -> Vec<Vec<Line<'static>>> {
         vec![
-            vec![Self::line(0, "[1] Page Images", selected)],
-            vec![Self::line(1, "[2] Site Images", selected)],
+            vec![Self::line(
+                DownloadScope::PageImages,
+                "[1] Page Images",
+                selected,
+            )],
+            vec![Self::line(
+                DownloadScope::SiteImages,
+                "[2] Site Images",
+                selected,
+            )],
         ]
     }
 
-    pub fn render(frame: &mut Frame, focus: &Focus, selected: Option<usize>) {
+    pub fn render(frame: &mut Frame, focus: &Focus, selected: DownloadScope) {
         let focused = matches!(focus, Focus::FeaturesTable);
 
         let app_layout = app_layout(frame);
@@ -46,8 +54,12 @@ impl FeaturesTable {
             .render(frame, app_layout[0], focused);
     }
 
-    fn line(idx: usize, text: &str, selected: Option<usize>) -> Line<'static> {
-        let is_selected = selected == Some(idx);
+    fn line(
+        scope: DownloadScope,
+        text: &str,
+        selected: DownloadScope,
+    ) -> Line<'static> {
+        let is_selected = selected == scope;
         let marker = if is_selected { "> " } else { "  " };
         let content = format!("{marker}{text}");
 
