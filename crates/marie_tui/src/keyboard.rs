@@ -26,16 +26,33 @@ impl KeyboardAction {
         debug_to_file(&format!("KeyCodePressed: {key:?}"), "debug.txt");
         match key {
             KeyCode::Left | KeyCode::Up | KeyCode::Down | KeyCode::Right => {
-                app.focus.handle(key);
-                return Self::None;
+                if app.focus != Focus::CommandPalette {
+                    app.focus.handle(key);
+                    return Self::None;
+                }
             }
 
             KeyCode::Esc => {
+                if app.focus == Focus::CommandPalette {
+                    app.command_palette_visible = false;
+                    app.focus = Focus::UrlInput;
+
+                    return Self::None;
+                }
+
                 if app.focus != Focus::UrlInput {
                     clean_debug_file("debug.txt");
                     return Self::Exit;
                 }
             }
+
+            KeyCode::Char(':') => {
+                app.command_palette_visible = true;
+                app.focus = Focus::CommandPalette;
+
+                return Self::None;
+            }
+
             _ => match app.focus {
                 Focus::UrlInput => {
                     Self::textbox_input(key, &mut app.url_value);
@@ -78,6 +95,8 @@ impl KeyboardAction {
                     }
                     _ => {}
                 },
+
+                Focus::CommandPalette => { /* Soon. */ }
             },
         }
         Self::None
