@@ -78,7 +78,20 @@ impl AppContext {
     }
 
     pub fn handle_focus(&self, key: KeyCode) {
-        self.focus.lock().expect("focus mutex poisoned").handle(key);
+        let mut focus = self.focus.lock().expect("focus mutex poisoned");
+        let command_palette_visible = self.command_palette_visible();
+
+        match key {
+            KeyCode::Left => focus.left(),
+            KeyCode::Right => focus.right(),
+            KeyCode::Up => focus.up(),
+            KeyCode::Down => focus.down(),
+            _ => {}
+        }
+
+        if *focus == Focus::CommandPalette && !command_palette_visible {
+            *focus = Focus::FeaturesTable;
+        }
     }
 
     #[must_use]
