@@ -1,18 +1,11 @@
-use std::collections::VecDeque;
-
-use crate::download_scope::DownloadScope;
+use crate::core::context::AppContext;
 use crate::focus::Focus;
+use crate::keyboard::KeyboardAction;
 use crate::log_entry::LogEntry;
-use crate::ui::command_palette::CommandPalette;
-use crate::ui::download_button::DownloadButton;
-use crate::ui::features_table::FeaturesTable;
-use crate::ui::log_panel::LogPanel;
+use crate::ui::registry::UiRegistry;
 use crate::ui::shared::UiLayout;
-use crate::ui::simple_help::SimpleHelp;
-use crate::ui::url_input::UrlInput;
+use crossterm::event::KeyCode;
 use ratatui::Frame;
-
-const MAX_LOG_LINES: usize = 1_000;
 
 #[derive(Default, PartialEq, Eq)]
 pub enum AppState {
@@ -23,109 +16,63 @@ pub enum AppState {
 
 #[derive(Default)]
 pub struct App {
-    pub url_value: String,
-    pub command_value: String,
-    pub command_palette_visible: bool,
-    pub log_entries: VecDeque<LogEntry>,
-    pub log_scroll: usize,
-    pub log_hscroll: usize,
-    pub focus: Focus,
-    pub features_selected: DownloadScope,
-    pub state: AppState,
+    pub ctx: AppContext,
+    pub ui: UiRegistry,
 }
 
 impl App {
-    pub fn push_log(&mut self, entry: impl Into<LogEntry>) {
-        if self.log_entries.len() >= MAX_LOG_LINES {
-            self.log_entries.pop_front();
-            self.log_scroll = self.log_scroll.saturating_sub(1);
-        }
+    #[must_use]
+    pub const fn ctx(&self) -> &AppContext {
+        &self.ctx
+    }
 
-        self.log_entries.push_back(entry.into());
+    #[must_use]
+    pub const fn ui(&self) -> &UiRegistry {
+        &self.ui
+    }
+
+    #[must_use]
+    pub const fn ui_mut(&mut self) -> &mut UiRegistry {
+        &mut self.ui
+    }
+
+    #[must_use]
+    pub const fn split_mut(&mut self) -> (&mut AppContext, &mut UiRegistry) {
+        (&mut self.ctx, &mut self.ui)
+    }
+
+    pub fn push_log(&self, entry: impl Into<LogEntry>) {
+        self.ctx.push_log(entry);
     }
 
     #[must_use]
     pub fn is_busy(&self) -> bool {
-        self.state == AppState::Busy
+        self.ctx.is_busy()
     }
 
     pub fn render(&mut self, frame: &mut Frame) {
-        let layout = UiLayout::new(frame, self.command_palette_visible);
+        let visible = self.ctx.command_palette_visible();
+        let layout = UiLayout::new(frame, visible);
 
-        UrlInput::render(frame, &self.focus, &self.url_value, &layout);
-        DownloadButton::render(frame, &self.focus, self.is_busy(), &layout);
-        FeaturesTable::render(
-            frame,
-            &self.focus,
-            self.features_selected,
-            &layout,
-        );
-        LogPanel::render(
-            frame,
-            &self.focus,
-            &mut self.log_entries,
-            &mut self.log_scroll,
-            &mut self.log_hscroll,
-            &layout,
-        );
-
-        if self.command_palette_visible {
-            CommandPalette::render(
-                frame,
-                &self.focus,
-                &self.command_value,
-                &layout,
-            );
-        }
-        SimpleHelp::render(frame, &layout);
-    }
-}
-
-#[allow(unused_imports)]
-mod tests {
-    use super::{App, AppState, MAX_LOG_LINES};
-    use crate::log_entry::LogEntry;
-
-    #[test]
-    fn push_log_adds_entry() {
-        let mut app = App::default();
-
-        app.push_log(LogEntry::Info("Hello World!".into()));
-        assert_eq!(app.log_entries.len(), 1);
+        self.ui.render(frame, &layout, &self.ctx);
     }
 
-    #[test]
-    fn push_log_pops_front_when_full() {
-        let mut app = App::default();
-
-        for i in 0..MAX_LOG_LINES + 5 {
-            app.push_log(LogEntry::Info(format!("{i}")));
+    pub fn handle_key(&mut self, key: KeyCode) -> KeyboardAction {
+        if let KeyCode::Left | KeyCode::Right | KeyCode::Up | KeyCode::Down =
+            key
+        {
+            self.ctx.focus().handle(key);
+            return KeyboardAction::None;
         }
 
-        assert_eq!(app.log_entries.len(), MAX_LOG_LINES);
-        assert!(app.log_entries.front().unwrap().text() != "0");
-    }
-
-    #[test]
-    #[allow(clippy::field_reassign_with_default)]
-    fn push_log_clamps_scroll_when_pop() {
-        let mut app = App::default();
-        app.log_scroll = 5;
-
-        for _ in 0..MAX_LOG_LINES {
-            app.push_log(LogEntry::Info("x".into()));
+        if let Some(action) = self.ui.handle_key(key, &self.ctx) {
+            return action;
         }
 
-        app.push_log(LogEntry::Info("overflow".into()));
-        assert_eq!(app.log_scroll, 4);
-    }
+        if key == KeyCode::Esc && self.ctx.focus() != Focus::UrlInput {
+            return KeyboardAction::Exit;
+        }
 
-    #[test]
-    fn is_busy_true_when_busy() {
-        let mut app = App::default();
-        assert!(!app.is_busy());
-
-        app.state = AppState::Busy;
-        assert!(app.is_busy());
+        KeyboardAction::None
     }
 }
