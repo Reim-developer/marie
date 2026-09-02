@@ -6,7 +6,7 @@ use ratatui::{
 };
 
 const SIMPLE_HELP_PARAG: &str =
-    "← → ↑ ↓: Navigate    ENTER: Select    ESC: Exit
+    "← → ↑ ↓: Navigate    ENTER: Select    ESC: Exit    : Open Command Palette
 ";
 
 pub fn render_simple_help(frame: &mut Frame, area: &Rect) {

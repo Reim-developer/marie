@@ -6,7 +6,7 @@ use ratatui::{
 
 use crate::{
     components::table_list::TableList, download_scope::DownloadScope,
-    focus::Focus, ui::shared::app_layout,
+    focus::Focus, ui::shared::UiLayout,
 };
 
 pub struct FeaturesTable;
@@ -40,10 +40,15 @@ impl FeaturesTable {
         ]
     }
 
-    pub fn render(frame: &mut Frame, focus: &Focus, selected: DownloadScope) {
+    pub fn render(
+        frame: &mut Frame,
+        focus: &Focus,
+        selected: DownloadScope,
+        ui_layout: &UiLayout,
+    ) {
         let focused = matches!(focus, Focus::FeaturesTable);
 
-        let app_layout = app_layout(frame);
+        let app_layout = ui_layout.content_left;
         let mut table_list = TableList::default();
 
         table_list
@@ -51,7 +56,7 @@ impl FeaturesTable {
             .rows(Self::rows(selected))
             .border_color(if focused { Color::Cyan } else { Color::White })
             .description(Self::description(selected))
-            .render(frame, app_layout[0], focused);
+            .render(frame, app_layout, focused);
     }
 
     fn line(

@@ -3,9 +3,11 @@ use std::collections::VecDeque;
 use crate::download_scope::DownloadScope;
 use crate::focus::Focus;
 use crate::log_entry::LogEntry;
+use crate::ui::command_palette::CommandPalette;
 use crate::ui::download_button::DownloadButton;
 use crate::ui::features_table::FeaturesTable;
 use crate::ui::log_panel::LogPanel;
+use crate::ui::shared::UiLayout;
 use crate::ui::simple_help::SimpleHelp;
 use crate::ui::url_input::UrlInput;
 use ratatui::Frame;
@@ -22,6 +24,8 @@ pub enum AppState {
 #[derive(Default)]
 pub struct App {
     pub url_value: String,
+    pub command_value: String,
+    pub command_palette_visible: bool,
     pub log_entries: VecDeque<LogEntry>,
     pub log_scroll: usize,
     pub log_hscroll: usize,
@@ -46,17 +50,34 @@ impl App {
     }
 
     pub fn render(&mut self, frame: &mut Frame) {
-        UrlInput::render(frame, &self.focus, &self.url_value);
-        DownloadButton::render(frame, &self.focus, self.is_busy());
-        FeaturesTable::render(frame, &self.focus, self.features_selected);
+        let layout = UiLayout::new(frame, self.command_palette_visible);
+
+        UrlInput::render(frame, &self.focus, &self.url_value, &layout);
+        DownloadButton::render(frame, &self.focus, self.is_busy(), &layout);
+        FeaturesTable::render(
+            frame,
+            &self.focus,
+            self.features_selected,
+            &layout,
+        );
         LogPanel::render(
             frame,
             &self.focus,
             &mut self.log_entries,
             &mut self.log_scroll,
             &mut self.log_hscroll,
+            &layout,
         );
-        SimpleHelp::render(frame);
+
+        if self.command_palette_visible {
+            CommandPalette::render(
+                frame,
+                &self.focus,
+                &self.command_value,
+                &layout,
+            );
+        }
+        SimpleHelp::render(frame, &layout);
     }
 }
 
