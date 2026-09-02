@@ -2,7 +2,7 @@ use crossterm::event::KeyCode;
 
 use crate::focus::Focus::FeaturesTable;
 
-#[derive(Default, PartialEq, Eq, Debug)]
+#[derive(Default, PartialEq, Eq, Debug, Clone, Copy)]
 pub enum Focus {
     #[default]
     UrlInput,
