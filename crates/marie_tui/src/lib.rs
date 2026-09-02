@@ -20,9 +20,11 @@ pub mod components {
 
 pub(crate) mod ui {
     pub mod command_palette;
+    pub mod component;
     pub mod download_button;
     pub mod features_table;
     pub mod log_panel;
+    pub mod registry;
     pub mod shared;
     pub mod simple_help;
     pub mod url_input;
@@ -30,6 +32,7 @@ pub(crate) mod ui {
 
 pub(crate) mod core {
     pub mod app;
+    pub mod context;
     pub mod event;
     pub mod sender;
     pub mod signal;
