@@ -2,13 +2,14 @@ use crossterm::event::KeyCode;
 
 use crate::focus::Focus::FeaturesTable;
 
-#[derive(Default, PartialEq, Eq)]
+#[derive(Default, PartialEq, Eq, Debug)]
 pub enum Focus {
     #[default]
     UrlInput,
     DownloadButton,
     FeaturesTable,
     LogPanel,
+    CommandPalette,
 }
 
 impl Focus {
@@ -28,6 +29,7 @@ impl Focus {
             Self::FeaturesTable => Self::LogPanel,
             Self::LogPanel => Self::FeaturesTable,
             Self::UrlInput => Self::DownloadButton,
+            Self::CommandPalette => Self::CommandPalette,
         }
     }
 
@@ -37,12 +39,13 @@ impl Focus {
             Self::UrlInput => Self::DownloadButton,
             Self::LogPanel => Self::FeaturesTable,
             Self::FeaturesTable => Self::LogPanel,
+            Self::CommandPalette => Self::CommandPalette,
         }
     }
 
     pub const fn up(&mut self) {
         *self = match self {
-            Self::FeaturesTable => Self::UrlInput,
+            Self::FeaturesTable | Self::CommandPalette => Self::UrlInput,
             Self::UrlInput => FeaturesTable,
             Self::LogPanel => Self::DownloadButton,
             Self::DownloadButton => Self::LogPanel,
@@ -52,9 +55,10 @@ impl Focus {
     pub const fn down(&mut self) {
         *self = match self {
             Self::FeaturesTable => Self::UrlInput,
-            Self::UrlInput => Self::FeaturesTable,
+            Self::UrlInput => Self::CommandPalette,
             Self::LogPanel => Self::DownloadButton,
             Self::DownloadButton => Self::LogPanel,
+            Self::CommandPalette => Self::FeaturesTable,
         }
     }
 }
@@ -100,10 +104,10 @@ mod tests {
         let mut f = Focus::UrlInput;
 
         f.handle(KeyCode::Down);
-        assert!(matches!(f, Focus::FeaturesTable));
+        assert!(matches!(f, Focus::CommandPalette));
 
         f.handle(KeyCode::Down);
-        assert!(matches!(f, Focus::UrlInput));
+        assert!(matches!(f, Focus::FeaturesTable));
     }
 
     #[test]
@@ -129,14 +133,14 @@ mod tests {
         assert!(matches!(f, Focus::UrlInput));
 
         f.handle(down);
-        assert!(matches!(f, Focus::FeaturesTable));
+        assert!(matches!(f, Focus::CommandPalette));
 
         f.handle(left);
         f.handle(up);
 
-        assert!(matches!(f, Focus::DownloadButton));
+        assert!(matches!(f, Focus::UrlInput));
 
         f.handle(right);
-        assert!(matches!(f, Focus::UrlInput));
+        assert!(matches!(f, Focus::DownloadButton));
     }
 }
