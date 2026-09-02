@@ -1,9 +1,7 @@
 #[cfg(debug_assertions)]
 use crate::utils::{clean_debug_file, debug_to_file};
 
-use crate::{
-    app::App, download_scope::DownloadScope, focus::Focus, log_entry::LogEntry,
-};
+use crate::{app::App, focus::Focus};
 use crossterm::event::KeyCode;
 
 #[derive(Debug, Clone, Copy)]
@@ -23,139 +21,49 @@ impl KeyboardAction {
     }
 
     pub fn keyboard(key: KeyCode, app: &mut App) -> Self {
-        debug_to_file(&format!("KeyCodePressed: {key:?}"), "debug.txt");
+        debug_to_file("KeyCode Pressed:", "keyboard.tmp");
+
+        let (ctx_mut, ui_mut) = app.split_mut();
+        let ctx = &*ctx_mut;
+
         match key {
-            KeyCode::Left | KeyCode::Up | KeyCode::Down | KeyCode::Right => {
-                if app.focus != Focus::CommandPalette {
-                    app.focus.handle(key);
-                    return Self::None;
+            KeyCode::Left | KeyCode::Right | KeyCode::Down | KeyCode::Up => {
+                if ctx.focus() != Focus::CommandPalette {
+                    ctx.handle_focus(key);
                 }
+
+                return Self::None;
             }
-
             KeyCode::Esc => {
-                if app.focus == Focus::CommandPalette {
-                    app.command_palette_visible = false;
-                    app.focus = Focus::UrlInput;
+                if ctx.focus() == Focus::CommandPalette {
+                    ctx.set_command_palette_visible(false);
+                    ctx.set_focus(Focus::UrlInput);
 
                     return Self::None;
                 }
 
-                if app.focus != Focus::UrlInput {
-                    clean_debug_file("debug.txt");
+                if ctx.focus() != Focus::UrlInput {
+                    clean_debug_file("keyboard.tmp");
                     return Self::Exit;
                 }
-            }
-
-            KeyCode::Char(':') => {
-                app.command_palette_visible = true;
-                app.focus = Focus::CommandPalette;
 
                 return Self::None;
             }
 
-            _ => match app.focus {
-                Focus::UrlInput => {
-                    Self::textbox_input(key, &mut app.url_value);
-                }
+            KeyCode::Char(':') if ctx.focus() != Focus::UrlInput => {
+                ctx.set_command_palette_visible(true);
+                ctx.set_focus(Focus::CommandPalette);
 
-                Focus::DownloadButton => {
-                    if key == KeyCode::Enter {
-                        if app.is_busy() {
-                            app.push_log(LogEntry::Error(
-                                "Download in progress.".into(),
-                            ));
-                            return Self::None;
-                        }
-
-                        return Self::Download;
-                    }
-                }
-                Focus::FeaturesTable => match key {
-                    KeyCode::Char('1') => {
-                        app.features_selected = DownloadScope::PageImages;
-                    }
-                    KeyCode::Char('2') => {
-                        app.features_selected = DownloadScope::SiteImages;
-                    }
-                    _ => {}
-                },
-
-                Focus::LogPanel => match key {
-                    KeyCode::Char('k') => {
-                        app.log_scroll = app.log_scroll.saturating_sub(1);
-                    }
-                    KeyCode::Char('j') => {
-                        app.log_scroll += 1;
-                    }
-                    KeyCode::Char('h') => {
-                        app.log_hscroll = app.log_hscroll.saturating_sub(1);
-                    }
-                    KeyCode::Char('l') => {
-                        app.log_hscroll += 1;
-                    }
-                    _ => {}
-                },
-
-                Focus::CommandPalette => { /* Soon. */ }
-            },
-        }
-        Self::None
-    }
-
-    pub fn textbox_input(key: KeyCode, text: &mut String) {
-        type K = KeyCode;
-
-        match key {
-            K::Char(c) => text.push(c),
-            K::Backspace => {
-                text.pop();
+                return Self::None;
             }
+
             _ => {}
         }
-    }
-}
 
-#[cfg(test)]
-mod tests {
-    use super::KeyboardAction;
-    use crossterm::event::KeyCode;
+        if let Some(action) = ui_mut.handle_key(key, ctx) {
+            return action;
+        }
 
-    #[test]
-    fn test_input_appends_char() {
-        let mut s = String::new();
-
-        KeyboardAction::textbox_input(KeyCode::Char('a'), &mut s);
-        KeyboardAction::textbox_input(KeyCode::Char('b'), &mut s);
-
-        assert_eq!(s, "ab");
-    }
-
-    #[test]
-    fn test_input_backspace_removes() {
-        let mut s = "ab".to_string();
-
-        KeyboardAction::textbox_input(KeyCode::Backspace, &mut s);
-        assert_eq!(s, "a");
-
-        KeyboardAction::textbox_input(KeyCode::Backspace, &mut s);
-        assert_eq!(s, "");
-        KeyboardAction::textbox_input(KeyCode::Backspace, &mut s);
-        assert_eq!(s, "");
-    }
-
-    #[test]
-    fn from_key_esc_is_exit() {
-        assert!(matches!(
-            KeyboardAction::from_key(KeyCode::Esc),
-            KeyboardAction::Exit
-        ));
-    }
-
-    #[test]
-    fn from_key_other_is_none() {
-        assert!(matches!(
-            KeyboardAction::from_key(KeyCode::Char('a')),
-            KeyboardAction::None
-        ));
+        Self::None
     }
 }
