@@ -1,0 +1,8 @@
+[package]
+name = "downloader"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+marie_core = { path = "../../crates/marie_core" }
+tokio = { version = "1.53.1", features = ["macros", "rt-multi-thread"] }
