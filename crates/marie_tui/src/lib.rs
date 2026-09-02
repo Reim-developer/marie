@@ -19,6 +19,7 @@ pub mod components {
 }
 
 pub(crate) mod ui {
+    pub mod command_palette;
     pub mod download_button;
     pub mod features_table;
     pub mod log_panel;
