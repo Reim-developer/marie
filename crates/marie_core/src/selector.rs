@@ -38,19 +38,14 @@ impl<'a> HtmlSelector<'a> {
         Ok(hrefs)
     }
 
-    /// # Errors
-    /// Parse selector failed.
-    pub fn srcs(&self) -> SourcesOrHref<'a> {
-        type S = Selector;
-
-        let selector = S::parse("[src]").map_err(|e| anyhow!("{e}"))?;
-        let srcs = self
-            .document
-            .select(&selector)
-            .filter_map(|element| element.value().attr("src"))
-            .collect();
-
-        Ok(srcs)
+    #[must_use]
+    pub fn srcs(&self) -> Vec<String> {
+        self.document
+            .select(&self.selector)
+            .filter_map(|element| {
+                element.value().attr("src").map(ToString::to_string)
+            })
+            .collect()
     }
 
     #[must_use]
@@ -138,7 +133,7 @@ fn test_src_element() {
 
     let html = Scraper::new(HTML.to_string()).parse_html();
     let selector = Scraper::selector("[href]", &html).unwrap();
-    let srcs = selector.srcs().unwrap();
+    let srcs = selector.srcs();
 
     for src in srcs {
         assert!(!src.is_empty());

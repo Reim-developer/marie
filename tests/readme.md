@@ -1,0 +1,1 @@
+those damn Cargo crates bellow are for testing core functionality without needing to launch the TUI (this TUI is as fat a pig, btw). Therefore, the code will look like a pile of garbage. Because the code is sh*t, that's why it's like that.

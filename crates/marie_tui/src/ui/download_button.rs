@@ -40,6 +40,13 @@ impl Component for DownloadButton {
 
         match key {
             KeyCode::Enter => {
+                let url = ctx.url_value();
+                if url.is_empty() {
+                    ctx.push_log(LogEntry::Error("URL is empty".into()));
+
+                    return Some(KeyboardAction::None);
+                }
+
                 if ctx.is_busy() {
                     ctx.push_log(LogEntry::Error(
                         "Download in progress".into(),
