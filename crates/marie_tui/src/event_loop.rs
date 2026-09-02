@@ -3,7 +3,7 @@ use futures_util::{FutureExt, StreamExt};
 use tokio::sync::mpsc;
 
 use crate::{
-    app::{App, AppState},
+    app::App,
     core::{event::AppEvent, sender::AppSender, signal::AppSignal},
     keyboard::KeyboardAction,
     log_entry::LogEntry,
@@ -89,13 +89,15 @@ impl EventLoop {
                     }
 
                     KeyboardAction::Download => {
-                        let url = self.app.url_value.clone();
-                        let scope = self.app.features_selected;
+                        let ctx = self.app.ctx();
+                        let url = ctx.url_value();
+                        let scope = ctx.features_selected();
 
                         self.app.push_log(LogEntry::Info(format!(
                             "Fetching {url}"
                         )));
-                        self.app.state = AppState::Busy;
+
+                        ctx.set_busy(true);
                         self.app_sender
                             .send(AppSignal::Download { url, scope })
                             .await?;
@@ -104,7 +106,8 @@ impl EventLoop {
             }
 
             Input::Core(event) => {
-                self.app.state = AppState::Idle;
+                let ctx = self.app.ctx();
+                ctx.set_busy(false);
 
                 match event {
                     AppEvent::Log(text) => {
