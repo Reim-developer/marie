@@ -1,5 +1,6 @@
 use ratatui::style::Color;
 
+#[derive(Clone)]
 pub enum LogEntry {
     Info(String),
     Success(String),
