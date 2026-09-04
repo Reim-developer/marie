@@ -1,9 +1,10 @@
-from PIL        import Image
-from sys        import exit
-from os.path    import exists
+from PIL import Image
+from sys import exit
+from os.path import exists
+
 
 def create_output_folder(path: str) -> str:
-    from os      import mkdir
+    from os import mkdir
 
     if exists(path):
         return path
@@ -14,8 +15,9 @@ def create_output_folder(path: str) -> str:
     except Exception as e:
         print(f"'create_output_folder' error: {e}")
         exit(1)
-    
-    return path 
+
+    return path
+
 
 def generate_images(count: int, path: str) -> None:
     image = Image.new("RGB", (800, 600), (0, 0, 0))
@@ -25,6 +27,7 @@ def generate_images(count: int, path: str) -> None:
         print(f"'generate_images' saved: {path}/image_{i}.png")
 
     print("'generate_images' success.")
+
 
 def generate_html(image_count: int, path: str) -> None:
     image_elements: list[str] = []
@@ -52,9 +55,8 @@ def generate_html(image_count: int, path: str) -> None:
 </html>
 """
 
-
     try:
-        with open(path, mode = "w") as f:
+        with open(path, mode="w") as f:
             f.write(TEMPLATE)
 
     except Exception as e:
@@ -62,6 +64,7 @@ def generate_html(image_count: int, path: str) -> None:
         exit(1)
 
     print("'generate_html': success.")
+
 
 def main() -> None:
     base_path = "test_server/statics"
@@ -73,5 +76,6 @@ def main() -> None:
 
     generate_images(10, output_path)
     generate_html(10, f"{base_path}/index.html")
+
 
 main()
