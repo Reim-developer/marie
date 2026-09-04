@@ -2,6 +2,43 @@ from marionette.core.fs import MarionetteFs
 from pytest_mock import MockerFixture
 from typing import Final
 from pathlib import Path
+from unittest.mock import mock_open
+
+
+def test_write_file_when_not_exists(mocker: MockerFixture) -> None:
+	fs = MarionetteFs()
+	fake_path = Path("/home/scheherazade/projects")
+	content = "Marionette"
+
+	mocker.patch.object(Path, "exists", return_value=False)
+	mocked_file = mocker.patch("builtins.open", mock_open())
+
+	fs.write_file(fake_path, content=content)
+
+	mocked_file.assert_called_once_with(fake_path, mode="a")
+	mocked_file().write.assert_called_once_with(content)
+
+
+def test_get_config_file(mocker: MockerFixture) -> None:
+	EXPECT_CONFIG: Final[Path] = Path(
+		"/home/scheherazade/projects/.marionette.toml"
+	)
+
+	mock_working_dir = mocker.patch.object(
+		target=MarionetteFs,
+		attribute="working_dir",
+		autospec=True,
+		return_value="/home/scheherazade/projects",
+	)
+
+	mocker.patch.object(Path, "exists", return_value=True)
+	mocker.patch.object(MarionetteFs, "has_config", return_value=True)
+	fs = MarionetteFs()
+	result = fs.config_file()
+
+	assert result
+	assert result == EXPECT_CONFIG
+	mock_working_dir.assert_called_once()
 
 
 def test_has_project_file(mocker: MockerFixture) -> None:
