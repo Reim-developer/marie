@@ -1,0 +1,33 @@
+[build-system]
+requires = ["uv-build>=0.12.9"]
+build-backend = "uv_build"
+
+[project]
+name = "marionette"
+version = "0.0.1"
+requires-python = ">=3.12.0"
+dependencies = [
+    "tomli-w>=1.2.0",
+    "typer>=0.27.2",
+]
+
+[tool.ruff]
+line-length = 80
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "tab"
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+
+[project.scripts]
+marionette = "marionette.main:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-mock>=3.15.1",
+    "ruff>=0.16.5",
+]
