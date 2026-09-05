@@ -8,6 +8,10 @@ class MarionetteFs:
 	def __init__(self, start_path: Path = Path.cwd()) -> None:
 		self.start_path = start_path
 
+	@property
+	def current_dir(self) -> Path:
+		return Path.cwd()
+
 	def __working_dir(self) -> Path | None:
 		parents: list[Path] = list(self.start_path.parents)
 
@@ -48,9 +52,9 @@ class MarionetteFs:
 		To avoid unwanted behavior such as overwriting files, caller need to
 		perform self-check, like use `exists` before using it.
 		"""
-		if not path.exists():
-			with open(path, mode="a") as f:
-				f.write(content)
+
+		with open(path, mode="a") as f:
+			f.write(content)
 
 	def create_file(self, path: Path) -> None:
 		"""
@@ -77,6 +81,18 @@ class MarionetteFs:
 		config_file = Path(f"{working_dir}/{_MARIONETTE_CONFIG}")
 
 		return config_file
+
+	def empty_config(self) -> bool:
+		if not self.has_config():
+			return False
+
+		config_file = self.config_file()
+		# It is assumed that the config
+		# already exists here because
+		# `has_config` has checked.
+		assert config_file, "'self.config_file()' should not None."
+
+		return config_file.stat().st_size == 0
 
 	def has_config(self) -> bool:
 		working_dir = self.working_dir()
