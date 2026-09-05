@@ -1,8 +1,7 @@
-from marionette.utils import todo
-
+from marionette.cli.main_cli import MarionetteCli
 
 def main() -> None:
-	todo()
+	MarionetteCli().app()
 
 
 if __name__ == "__main__":
