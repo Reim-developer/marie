@@ -1,0 +1,9 @@
+[project]
+name = "My Project"
+version = "0.0.1"
+
+[output_type]
+to = ".marionette-generated"
+
+[output_type.type]
+images = 0
