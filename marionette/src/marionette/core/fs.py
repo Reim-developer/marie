@@ -1,8 +1,7 @@
 from typing import LiteralString
 from pathlib import Path
 
-_MARIONETTE_CONFIG_NAME: LiteralString = ".marionette.toml"
-_MARIONETTE_CONFIG: LiteralString = ".marionette.toml".casefold()
+_MARIONETTE_CONFIG: LiteralString = ".marionette.toml"
 
 
 class MarionetteFs:
@@ -75,7 +74,7 @@ class MarionetteFs:
 			return None
 
 		working_dir = self.working_dir()
-		config_file = Path(f"{working_dir}/{_MARIONETTE_CONFIG_NAME}")
+		config_file = Path(f"{working_dir}/{_MARIONETTE_CONFIG}")
 
 		return config_file
 
@@ -97,4 +96,4 @@ class MarionetteFs:
 
 	@staticmethod
 	def config_name() -> LiteralString:
-		return _MARIONETTE_CONFIG_NAME
+		return _MARIONETTE_CONFIG
