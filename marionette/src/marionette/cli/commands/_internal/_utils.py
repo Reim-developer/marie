@@ -1,5 +1,7 @@
-from typer import Exit
+from typer import Exit, echo
 from typing import NoReturn
+
+println = echo
 
 
 def die(code: int) -> NoReturn:
